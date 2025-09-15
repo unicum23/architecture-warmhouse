@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: temperature-api
+  main:
+    banner-mode: off
+
+logging:
+  level:
+    org.springframework.web: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+server:
+  port: 8081

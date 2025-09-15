@@ -1,0 +1,71 @@
+asyncapi: 3.0.0
+info:
+  title: IoT MQ Broker API
+  version: 1.0.0
+  description: |-
+    Устройства "Умного дома" получают команды от бэкенда и передают ему обратный статус в виде показателей телеметрии.
+    Асинхронное взаимодействие между backend и IoT-устройствами через HiveMQ.
+    - Топик `commands` — команды от backend к устройствам.
+    - Топик `telemetry` — телеметрия от устройств к backend.
+defaultContentType: application/json
+servers:
+  hivemq:
+    host: mqtts://broker.hivemq.com:8883
+    protocol: mqtt
+    description: Публичный HiveMQ MQTT брокер (пример)
+channels:
+  commands:
+    address: commands.device.{deviceId}
+    messages:
+      commandMessage:
+        $ref: '#/components/messages/CommandMessage'
+  telemetry:
+    address: telemetry.device.{deviceId}
+    messages:
+      telemetryMessage:
+        $ref: '#/components/messages/TelemetryMessage'
+
+components:
+  messages:
+    CommandMessage:
+      name: CommandMessage
+      title: Команда для устройства
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CommandPayload'
+
+    TelemetryMessage:
+      name: TelemetryMessage
+      title: Телеметрия от устройства
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TelemetryPayload'
+
+  schemas:
+    CommandPayload:
+      type: object
+      description: JSON-команда, отправляемая устройству
+      properties:
+        commandCode:
+          type: string
+          example: "led_on"
+        value:
+          type: string
+          example: "true"
+      required:
+        - commandCode
+        - value
+
+    TelemetryPayload:
+      type: object
+      description: Телеметрические данные, передаваемые от устройства
+      properties:
+        commandCode:
+          type: string
+          example: "temp"
+        value:
+          type: string
+          example: "23"
+      required:
+        - commandCode
+        - value

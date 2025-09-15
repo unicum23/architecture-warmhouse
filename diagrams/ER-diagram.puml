@@ -1,0 +1,141 @@
+@startuml
+!define ENTITY_COLOR #D2E5FD
+!define RELATION_COLOR #2C3E50
+
+
+skinparam defaultFontName "Verdana"
+skinparam defaultFontSize 12
+skinparam roundcorner 20
+
+skinparam class {
+        BackgroundColor ENTITY_COLOR
+        ArrowColor RELATION_COLOR
+        BorderColor RELATION_COLOR
+}
+
+enum UserStatus {
+        UNCONFIRMED
+        ACTIVE
+        INACTIVE
+        BLOCKED
+}
+
+enum DeviceStatus {
+        ACTIVE
+        INACTIVE
+}
+
+entity User {
+        + id: uuid
+        --
+        email: varchar
+        phone: varchar
+        last_name: varchar
+        first_name: varchar
+        middle_name: varchar
+        birth_date: date
+        status: UserStatus
+        role_id: uuid
+        home_id: uuid
+        create_at: date
+        update_at: date
+        registered_at: date
+}
+
+entity Role {
+        + id: uuid
+        --
+        name: varchar
+        desc: varchar
+}
+
+entity Permission {
+        + id: uuid
+        --
+        name: varchar
+        desc: varchar
+        role_id: uuid
+}
+
+entity Home {
+        + id: uuid
+        --
+        address: varchar
+        fiasId: varchar
+        create_at: date
+        update_at: date
+}
+
+entity Room {
+        + id: uuid
+        --
+        name: varchar
+        home_id: uuid
+        create_at: date
+        update_at: date
+}
+
+entity Device {
+        + id: uuid
+        --
+        serial_number: varchar
+        name: varchar
+        software_version: varchar
+        status: DeviceStatus
+        create_at: date
+        update_at: date
+        registered_at: date
+        room_id: uuid
+}
+
+entity DeviceType {
+        + id: uuid
+        --
+        name: varchar
+}
+
+entity Software {
+        + id: uuid
+        --
+        name: varchar
+        version: varchar
+        device_type_id: uuid
+        release_date: date
+        s3_path: varchar
+}
+
+entity Command {
+        + id: uuid
+        --
+        name: varchar
+        code: varchar
+        desc: varchar
+        device_type_id: uuid
+}
+
+entity Telemetry {
+        + id: uuid
+        --
+        device_id: uuid
+        command_id: uuid
+        value: varchar
+        measuredAt: date
+}
+
+User -- UserStatus : has
+Device -- DeviceStatus : has
+
+User ||--o{ Role
+User ||--o{ Home
+Role ||--o{ Permission
+Home ||--o{ Room
+
+Device ||--|| DeviceType
+DeviceType ||--o{ Software
+DeviceType ||--o{ Command
+Room ||--o{ Device
+
+Device ||--o{ Telemetry
+Telemetry ||--|| Command
+
+@enduml

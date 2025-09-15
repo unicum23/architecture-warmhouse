@@ -1,0 +1,106 @@
+@startuml
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title WarmHouse Container Diagram
+
+Person(user, "Клиент", "Пользователь")
+Person(admin, "Администратор", "Специалист, администрирующий систему")
+
+System_Boundary(warmHouse, "Система 'Теплый дом'") {
+    Container(front, "Front UI (WebApp/MobAPP)", "React/Kotlin/Swift", "Клиентский веб-интерфейс")
+
+    Container(keycloak, "Keycloak", "Java, Quarkus, REST API", "Система авторизации и выдачи JWT токенов")
+    ContainerDb(keycloak_db, "Keycloak DB", "Postgresql Database", "Хранит роли, пользователи, реалмы, настройки аутентификации")
+
+    Container(api_gateway, "API Gateway", "Java, Spring Cloud", "Точка входа, аутентификация, маршрутизация")
+
+    Container(user_service, "User Service", "Java, Spring MVC", "Регистрация пользователя, авторизация, профиль, роли, полномочия, справочники клиента")
+
+    ContainerDb(user_db, "User DB", "MongoDB", "Хранит пользователей, роли, полномочия, дома, локации, настройки профиля")
+
+    Container(device_service, "Device Service", "Java, Spring MVC", "Регистрация устройств, обновление свойств, прошивки, мониторинг состояния, справочники устройств")
+    ContainerDb(device_db, "Device DB", "MongoDB", "Хранит устройства, настройки, доступные операции, возможные значения")
+
+    Container(telemetry_service, "Telemetry Service", "Java, Spring MVC", "Получение данных с датчиков устройств, кэширование, аналитика, агрегация показателей")
+    ContainerDb(telemetry_db, "Telemetry DB", "TimescaleDB", "Хранит многочисленные показатели с датчиков")
+
+    Container(command_service, "Command Service", "Java, Spring MVC", "Отправка команд на устройства, проверка доставки, проверки конфликтов команд")
+    ContainerDb(command_db, "Command DB", "MongoDB", "Хранит отправленные команды на устройства")
+
+    Container(automation_service, "Automation Service", "Java, Spring MVC", "Запуск автоматических сценариев, справочники с правилами, расписаниями, сценариями")
+    ContainerDb(automation_db, "Automation DB", "MongoDB", "Хранит справочники с правилами, расписаниями, сценариями")
+
+    Container(monitoring_service, "Monitoring Service", "Java, Spring MVC", "Управление мониторингом: аудит, логи, метрики")
+    ContainerDb(monitoring_db, "Monitoring DB", "MongoDB", "Хранит логи, метрики, данные по аудиту")
+
+    Container(notification_service, "Notification Service", "Java, Spring MVC", "Управление уведомлениями: сообщения, SMS/PUSH/EMAIL")
+    ContainerDb(notification_db, "Notification DB", "MongoDB", "Хранит уведомления, подписки на SMS/PUSH/EMAIL")
+
+    Container(payment_service, "Payment Service", "Java, Spring MVC", "Управление оплатой, тарифами, подписками")
+    ContainerDb(payment_db, "Payment DB", "MongoDB", "Хранит информацию об оплате, тарифах, подписках")
+
+    Container(cache_service, "Cache Service", "Redis", "Кэш для быстрого доступа данным телеметрии")
+
+    Container(device_messaging, "Device Messaging", "Java, Spring MVC", "Передает и получает данные из MQTT топиков, перенаправляет трафик с устройств на Kafka")
+    ContainerQueue(event_streaming_platform, "Event Streaming Platform", "Apache Kafka", "Брокер потоков данных")
+    ContainerQueue(iot_broker, "IoT MQ Broker", "HiveMQ", "Брокер сообщений")
+}
+
+System_Ext(banking_system, "Banking Payment System", "Банковская система оплаты")
+System_Ext(physical_device, "Devices/Sensors/Controllers", "Физические устройства умного дома")
+
+Rel(user, front, "Uses", "HTTPS, TCP/IP")
+Rel_Neighbor(user, front, "Заходит в ЛК")
+
+Rel(admin, front, "Uses", "HTTPS, TCP/IP")
+Rel_Neighbor(admin, front, "Заходит в админку")
+
+Rel_Neighbor(front, keycloak, "Авторизуется")
+Rel_Neighbor(keycloak, front, "Возвращает\nJWT-токен")
+
+Rel(keycloak, keycloak_db, "Reads/Writes", "JDBC, TCP/IP")
+
+Rel(front, api_gateway, "Uses", "HTTPS, TCP/IP")
+
+Rel(api_gateway, user_service, "Uses", "HTTPS, TCP/IP")
+Rel(api_gateway, device_service, "Uses", "HTTPS, TCP/IP")
+Rel(api_gateway, telemetry_service, "Uses", "HTTPS, TCP/IP")
+Rel(api_gateway, command_service, "Uses", "HTTPS, TCP/IP")
+Rel(api_gateway, automation_service, "Uses", "HTTPS, TCP/IP")
+Rel(api_gateway, monitoring_service, "Uses", "HTTPS, TCP/IP")
+Rel(api_gateway, notification_service, "Uses", "HTTPS, TCP/IP")
+Rel(api_gateway, payment_service, "Uses", "HTTPS, TCP/IP")
+
+Rel(user_service, user_db, "Queries", "MongoDB Wire Protocol, TCP/IP")
+Rel(device_service, device_db, "Queries", "MongoDB Wire Protocol, TCP/IP")
+Rel(telemetry_service, telemetry_db, "Queries", "JDBC, TCP/IP")
+Rel(command_service, command_db, "Queries", "MongoDB Wire Protocol, TCP/IP")
+Rel(automation_service, automation_db, "Queries", "MongoDB Wire Protocol, TCP/IP")
+Rel(monitoring_service, monitoring_db, "Queries", "MongoDB Wire Protocol, TCP/IP")
+Rel(notification_service, notification_db, "Queries", "MongoDB Wire Protocol, TCP/IP")
+Rel(payment_service, payment_db, "Queries", "MongoDB Wire Protocol, TCP/IP")
+
+Rel(telemetry_service, cache_service, "Sets/Gets", "RESP, TCP/IP")
+
+Rel(telemetry_service, event_streaming_platform, "Consumes", "Kafka Protocol, TCP/IP")
+Rel(command_service, event_streaming_platform, "Produces/Consumes", "Kafka Protocol, TCP/IP")
+Rel(automation_service, event_streaming_platform, "Produces/Consumes", "Kafka Protocol, TCP/IP")
+Rel(monitoring_service, event_streaming_platform, "Produces/Consumes", "Kafka Protocol, TCP/IP")
+Rel(notification_service, event_streaming_platform, "Produces/Consumes", "Kafka Protocol, TCP/IP")
+
+Rel(device_messaging, event_streaming_platform, "Produces/Consumes", "Kafka Protocol, TCP/IP")
+Rel_Neighbor(device_messaging, event_streaming_platform, "Отправляет показания и получает команды")
+
+Rel(device_messaging, iot_broker, "Produces", "MQTT, TCP/IP")
+Rel(iot_broker, device_messaging, "Delivers", "MQTT, TCP/IP")
+
+Rel(payment_service, banking_system, "Uses", "HTTPS, TCP/IP")
+Rel_Neighbor(payment_service, banking_system, "Производит оплату")
+
+Rel(iot_broker, physical_device, "Delivers", "MQTT, TCP/IP")
+Rel_Neighbor(physical_device, iot_broker, "Получает показания и отправляет команды")
+
+@enduml

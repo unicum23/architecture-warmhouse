@@ -1,0 +1,22 @@
+@startuml
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title WarmHouse Context Diagram (monolith)
+
+LAYOUT_WITH_LEGEND()
+
+top to bottom direction
+
+Person(user, "Клиент", "Пользователь")
+Person(admin, "Администратор", "Специалист, администрирующий систему")
+
+System(warm_house, "Система 'Теплый дом'", "Передает команды на устройства, получает телеметрию с датчиков, Агрегирует, валидирует, хранит данные в БД. Взаимодействует пользователями.")
+
+System_Ext(api_devices, "Физические устройства", "Датчики/сенсоры/контроллеры, принимают команды и передают данные")
+
+Rel(user, warm_house, "Мониторит и управляет устройствами через web/mobile приложение")
+Rel(admin, warm_house, "Заводит новых клиентов, модерирует систему, наполняет справочники, занимается мониторингом процессов")
+Rel(warm_house, api_devices, "Собирает информацию по обновлениям температуры")
+
+@enduml
