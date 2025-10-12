@@ -1,0 +1,33 @@
+@startuml
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title WarmHouse Component Diagram for Telemetry Service
+
+Person(user, "Клиент", "Пользователь")
+
+Container(front, "Front UI (WebApp/MobAPP)", "React/Kotlin/Swift", "Клиентский веб-интерфейс")
+Container(api_gateway, "API Gateway", "Java, Spring Cloud", "Точка входа, аутентификация, маршрутизация")
+Container(redis, "Redis Cache", "Redis", "Кэш хранилище показателей с датчиков")
+ContainerDb(telemetry_db, "Telemetry DB", "TimescaleDB", "Хранит многочисленные показатели с датчиков")
+
+Container_Boundary(telemetry_service_container, "Telemetry Service") {
+    Component(telemetry_controller, "Telemetry API", "Spring Bean MVC Rest Controller", "Возвращает показания с датчиков по ID устройства, дома, локации")
+    Component(telemetry_service, "Telemetry Service", "Spring Bean Service", "Получает данные из кэша и БД. Агрегирует и анализирует показания")
+    Component(telemetry_repository, "Telemetry TimescaleRepository", "Spring Bean Component", "Работает с персистентность, ищет, получает, агрегирует, группирует и записывает данные в БД")
+    Component(telemetry_cache, "Telemetry Cache", "Spring Bean Component", "Работает с распределенным кэшем Redis, сохраняет и получает данные показания для быстрого получения in-memory")
+
+    Rel(user, front, "Uses", "HTTPS, TCP/IP")
+    Rel(front, api_gateway, "Uses", "HTTPS, TCP/IP")
+    Rel(api_gateway, telemetry_controller, "Uses", "HTTPS, TCP/IP")
+
+    Rel(telemetry_controller, telemetry_service, "Uses")
+    Rel(telemetry_service, telemetry_repository, "Uses")
+    Rel(telemetry_service, telemetry_cache, "Uses")
+    Rel(telemetry_repository, telemetry_db, "Read & write to", "JDBC/TCP")
+    Rel(telemetry_cache, redis, "Read & write to", "RESP/TCP")
+}
+
+@enduml

@@ -1,0 +1,37 @@
+@startuml ClassDiagram
+
+title WarmHouse Code Diagram for Telemetry Service
+
+class TelemetryApi {
+  +getData(request: Request): Response<TelemetryDto>
+}
+
+class TelemetryService {
+  +getData(request: Request): TelemetryDto
+  +getData(deviceId: String): TelemetryDto
+  +getData(fiasId: String): TelemetryDto
+  +getData(locationId: String): TelemetryDto
+}
+
+class TelemetryRepository {
+    +getDataByDeviceId(deviceId: String): Telemetry
+    +getDataByFiasId(fiasId: String): Telemetry
+    +getDataByLocationId(locationId: String): Telemetry
+}
+
+class TelemetryCache {
+  +getData(hash: String): TelemetryDto
+  +putCache(dto:TelemetryDto)
+}
+
+class TelemetryMapper {
+    +telemetryDto2Telemetry(TelemetryDto): Telemetry
+    +telemetry2TelemetryDto(Telemetry): TelemetryDto
+}
+
+TelemetryApi --> TelemetryService : Получает показания с датчиков по ID устройства/дома/локации
+TelemetryService --> TelemetryRepository : Получает из БД, агрегирует и обрабтывает показания с датчиков по фильтрам, кладет в кэш
+TelemetryService --> TelemetryCache : Получает показания из кэша
+TelemetryService --> TelemetryMapper : Получает смапленные entity/dto
+
+@enduml
